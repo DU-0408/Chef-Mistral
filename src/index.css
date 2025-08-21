@@ -1,0 +1,131 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Inter, sans-serif;
+    background-color: #FAFAF8;
+}
+
+.head{
+    height: 6.9375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+    box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.10), 0px 1px 2px 0px rgba(0, 0, 0, 0.06);
+}
+
+.logo{
+    width: 2.6875rem;
+    height: 3.25rem;
+    margin-right: 0.6875rem;
+}
+
+.title{
+    font-size: 2rem;
+    font-weight: 400;
+}
+
+.main-section{
+    padding: 4.1875rem 3.9375rem 4.6875rem;
+}
+
+.form-section{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.form-input{
+    border-radius: 6px;
+    padding: 0.5626rem 0.8125rem;
+    width: 24.9375rem;
+    height: 2.375rem;
+    border: 1px solid #D1D5DB;
+    margin-right: 12px;
+}
+
+.form-button{
+    width: 11.4375rem;
+    height: 2.375rem;
+    border-radius: 6px;
+    background-color: #141413;
+    color: #FAFAF8;
+    border: none;
+    padding: 0.5625rem 1.0625rem;
+}
+
+.ingredients-section{
+    margin-top: 3rem;
+}
+
+.ingredients-list{
+    display: flex;
+    flex-direction: column;
+    padding-top: 1.5rem;
+    padding-left: 1.5rem;
+    gap: 1.5rem;
+    color: gray;
+}
+
+.get-recipe-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px;
+    background: #F0EFEB;
+    margin-top: 3rem;
+    padding: 0.625rem 1.75rem;
+    margin-bottom: 3.75rem  ;
+}
+
+.get-recipe-container h3 {
+    font-size: 1.125rem;
+    font-weight: 500;
+    line-height: 1.5rem;
+    padding-top: 28px;
+    padding-bottom: 8px;
+    padding-left: 42px;
+    padding-right: 212px;
+}
+
+.get-recipe-container p {
+    color: #6B7280;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    padding-left: 42px;
+    padding-bottom: 29px;
+    padding-right: 212px;
+}
+
+.get-recipe-container button {
+    border: none;
+    border-radius: 6px;
+    background: #D17557;
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+    color: #FAFAF8;
+    font-family: Inter, sans-serif;
+    font-size: 0.875rem;
+    cursor: pointer;
+    padding: 0.5626rem 1.0625rem;
+    width: 115px;
+    height: 38px;
+}
+
+.recipe-button{
+    margin-right: 2.5625rem;
+}
+
+.suggested-recipe-container {
+    color: #475467;
+    line-height: 28px;
+    font-size: 1.125rem;
+    font-weight: 400;
+}
+
+.suggested-recipe-container ul li, .suggested-recipe-container ol li {
+    margin-bottom: 8px;
+}
