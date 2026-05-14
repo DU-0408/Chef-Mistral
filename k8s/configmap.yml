@@ -4,6 +4,5 @@ metadata:
   name: chef-qwen-config
   namespace: qchef
 data:
-  DATABASE_URL: "postgresql+asyncpg://postgres:postgres@postgres.qchef.svc.cluster.local:5432/chef_qwen"
   FRONTEND_URL: "https://qchef.udhomelab.dpdns.org"
   GOOGLE_REDIRECT_URI: "https://qchef.udhomelab.dpdns.org/api/auth/google/callback"
