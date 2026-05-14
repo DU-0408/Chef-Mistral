@@ -3,7 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Build-time backend URL
-ARG BACKEND_URL=http://localhost:8000
+ARG BACKEND_URL
 
 # Make available to Next.js build
 ENV BACKEND_URL=$BACKEND_URL

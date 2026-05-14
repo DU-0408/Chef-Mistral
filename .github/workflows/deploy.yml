@@ -49,6 +49,8 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: ghcr.io/${{ steps.prep.outputs.owner }}/chef-qwen-frontend:latest
+          build-args: |
+            BACKEND_URL=${{ secrets.BACKEND_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
