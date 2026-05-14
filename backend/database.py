@@ -4,9 +4,13 @@ Uses asyncpg driver for fully async database operations.
 """
 
 import os
+import asyncio
+import logging
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -39,10 +43,21 @@ async def get_db():
 
 
 async def init_db():
-    """Create all database tables on startup."""
-    async with engine.begin() as conn:
-        from models import User  # noqa: F401 — import to register model
-        await conn.run_sync(Base.metadata.create_all)
+    """Create all database tables on startup with retry logic."""
+    retries = 5
+    for attempt in range(retries):
+        try:
+            async with engine.begin() as conn:
+                from models import User  # noqa: F401 — import to register model
+                await conn.run_sync(Base.metadata.create_all)
+            logger.info("Database tables verified/created successfully.")
+            break
+        except Exception as e:
+            logger.warning(f"Database connection attempt {attempt + 1}/{retries} failed: {e}")
+            if attempt == retries - 1:
+                logger.error("Exhausted all retries connecting to the database.")
+                raise e
+            await asyncio.sleep(2)
 
 
 async def close_db():
