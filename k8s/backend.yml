@@ -52,7 +52,7 @@ spec:
                   name: chef-qwen-secret
                   key: POSTGRES_PASSWORD
             - name: DATABASE_URL
-              value: "postgresql+asyncpg://postgres:$(POSTGRES_PASSWORD)@postgres.qchef.svc.cluster.local:5432/chef_qwen"
+              value: "postgresql+asyncpg://postgres:$(POSTGRES_PASSWORD)@postgres:5432/chef_qwen"
           readinessProbe:
             httpGet:
               path: /api/health
