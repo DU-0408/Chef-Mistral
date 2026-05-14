@@ -1,0 +1,55 @@
+services:
+  # ─── PostgreSQL Database ───────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: chef-qwen-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: chef_qwen
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chef_qwen"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─── FastAPI Backend ───────────────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: chef-qwen-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/chef_qwen
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ─── Next.js Frontend ─────────────────────────────────────────
+  frontend:
+    build: ./frontend
+    container_name: chef-qwen-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      BACKEND_URL: http://backend:8000
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
