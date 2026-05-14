@@ -1,5 +1,5 @@
 """
-Chef-Mistral Backend — FastAPI Application
+Chef-Qwen Backend — FastAPI Application
 Provides authentication (email/password + Google OAuth) and AI recipe generation.
 """
 
@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
 
 # ─── App ─────────────────────────────────────────────────────────
 app = FastAPI(
-    title="Chef Mistral API",
+    title="Chef Qwen API",
     description="AI-powered recipe generation with authentication",
     version="1.0.0",
     lifespan=lifespan,
@@ -97,7 +97,7 @@ class UserResponse(BaseModel):
 # ─── Health check ────────────────────────────────────────────────
 @app.get("/api/health")
 async def health_check():
-    return {"status": "healthy", "service": "chef-mistral-api"}
+    return {"status": "healthy", "service": "chef-qwen-api"}
 
 
 # ─── Auth: Register ─────────────────────────────────────────────

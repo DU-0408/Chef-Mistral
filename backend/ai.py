@@ -1,6 +1,6 @@
 """
 AI recipe generation using HuggingFace Inference API.
-Calls Mistral-7B-Instruct via the huggingface_hub InferenceClient.
+Calls Qwen2.5-7B-Instruct via the huggingface_hub InferenceClient.
 """
 
 import os

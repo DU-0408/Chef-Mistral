@@ -1,5 +1,5 @@
 """
-SQLAlchemy ORM models for Chef-Mistral.
+SQLAlchemy ORM models for Chef-Qwen.
 """
 
 import uuid
