@@ -6,7 +6,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { getMe } from "./api";
+import { getMe, login as apiLogin, register as apiRegister } from "./api";
 
 const AuthContext = createContext(null);
 
@@ -41,6 +41,26 @@ export function AuthProvider({ children }) {
     setUser(userData);
   }, []);
 
+  const login = useCallback(async (email, password) => {
+    try {
+      const data = await apiLogin(email, password);
+      loginWithToken(data.access_token, data.user);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }, [loginWithToken]);
+
+  const register = useCallback(async (email, username, password) => {
+    try {
+      const data = await apiRegister(username, email, password);
+      loginWithToken(data.access_token, data.user);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }, [loginWithToken]);
+
   const logout = useCallback(() => {
     localStorage.removeItem("chef_qwen_token");
     setToken(null);
@@ -52,6 +72,8 @@ export function AuthProvider({ children }) {
     token,
     loading,
     isAuthenticated: !!token && !!user,
+    login,
+    register,
     loginWithToken,
     logout,
   };

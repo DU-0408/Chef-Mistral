@@ -12,12 +12,12 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, EmailStr
-from sqlalchemy import select
+from sqlalchemy import select, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from dotenv import load_dotenv
 
 from database import get_db, init_db, close_db
-from models import User
+from models import User, Recipe, PantryItem
 from auth import (
     hash_password,
     verify_password,
@@ -26,7 +26,7 @@ from auth import (
     get_current_user,
 )
 from oauth import get_google_auth_url, get_google_user_info
-from ai import get_recipe
+from ai import get_recipe, generate_recipe_image
 
 load_dotenv()
 
@@ -91,7 +91,38 @@ class UserResponse(BaseModel):
     email: str
     is_google_user: bool
     avatar_url: str | None
+    dietary_restrictions: str | None = None
     created_at: str
+
+class ProfileUpdateRequest(BaseModel):
+    dietary_restrictions: str | None
+
+class RecipeCreateRequest(BaseModel):
+    title: str
+    content: str
+    image_url: str | None = None
+
+class RecipeSchema(BaseModel):
+    id: str
+    title: str
+    content: str
+    image_url: str | None
+    is_favorite: bool
+    created_at: str
+
+class PantryItemCreateRequest(BaseModel):
+    name: str
+
+class PantryItemSchema(BaseModel):
+    id: str
+    name: str
+    created_at: str
+
+class ImageGenerateRequest(BaseModel):
+    prompt: str
+
+class ImageGenerateResponse(BaseModel):
+    image_b64: str
 
 
 # ─── Health check ────────────────────────────────────────────────
@@ -264,13 +295,34 @@ async def get_me(
         email=current_user.email,
         is_google_user=current_user.is_google_user,
         avatar_url=current_user.avatar_url,
+        dietary_restrictions=current_user.dietary_restrictions,
+        created_at=current_user.created_at.isoformat(),
+    )
+
+@app.patch("/api/auth/me", response_model=UserResponse)
+async def update_me(
+    request: ProfileUpdateRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Update user profile (dietary restrictions)."""
+    current_user.dietary_restrictions = request.dietary_restrictions
+    await db.commit()
+    await db.refresh(current_user)
+    return UserResponse(
+        id=current_user.id,
+        username=current_user.username,
+        email=current_user.email,
+        is_google_user=current_user.is_google_user,
+        avatar_url=current_user.avatar_url,
+        dietary_restrictions=current_user.dietary_restrictions,
         created_at=current_user.created_at.isoformat(),
     )
 
 
 # ─── Recipe generation ──────────────────────────────────────────
 @app.post("/api/recipe/generate", response_model=RecipeResponse)
-async def generate_recipe(
+async def generate_recipe_endpoint(
     request: RecipeRequest,
     current_user: Annotated[User, Depends(get_current_user)],
 ):
@@ -290,7 +342,7 @@ async def generate_recipe(
         )
 
     try:
-        recipe = await get_recipe(ingredients)
+        recipe = await get_recipe(ingredients, current_user.dietary_restrictions)
         return RecipeResponse(recipe=recipe)
     except Exception as e:
         logging.error(f"Recipe generation failed: {e}", exc_info=True)
@@ -298,3 +350,113 @@ async def generate_recipe(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Recipe generation failed: {str(e)}",
         )
+
+@app.post("/api/recipe/image", response_model=ImageGenerateResponse)
+async def generate_image_endpoint(
+    request: ImageGenerateRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Generate an image for a recipe."""
+    try:
+        image_b64 = await generate_recipe_image(request.prompt)
+        return ImageGenerateResponse(image_b64=image_b64)
+    except Exception as e:
+        logging.error(f"Image generation failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, 
+            detail="Failed to generate image. Please try again later."
+        )
+
+# ─── Recipes CRUD ───────────────────────────────────────────────
+@app.get("/api/recipes", response_model=list[RecipeSchema])
+async def get_recipes(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    result = await db.execute(select(Recipe).where(Recipe.user_id == current_user.id).order_by(Recipe.created_at.desc()))
+    return [
+        RecipeSchema(
+            id=r.id, title=r.title, content=r.content, image_url=r.image_url,
+            is_favorite=r.is_favorite, created_at=r.created_at.isoformat()
+        ) for r in result.scalars().all()
+    ]
+
+@app.post("/api/recipes", response_model=RecipeSchema)
+async def create_recipe(
+    request: RecipeCreateRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    recipe = Recipe(
+        user_id=current_user.id,
+        title=request.title,
+        content=request.content,
+        image_url=request.image_url,
+    )
+    db.add(recipe)
+    await db.commit()
+    await db.refresh(recipe)
+    return RecipeSchema(
+        id=recipe.id, title=recipe.title, content=recipe.content,
+        image_url=recipe.image_url, is_favorite=recipe.is_favorite, created_at=recipe.created_at.isoformat()
+    )
+
+@app.patch("/api/recipes/{recipe_id}")
+async def patch_recipe(
+    recipe_id: str,
+    is_favorite: bool,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    result = await db.execute(select(Recipe).where(Recipe.id == recipe_id, Recipe.user_id == current_user.id))
+    recipe = result.scalar_one_or_none()
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    
+    recipe.is_favorite = is_favorite
+    await db.commit()
+    return {"status": "updated"}
+
+@app.delete("/api/recipes/{recipe_id}")
+async def delete_recipe(
+    recipe_id: str,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    await db.execute(delete(Recipe).where(Recipe.id == recipe_id, Recipe.user_id == current_user.id))
+    await db.commit()
+    return {"status": "deleted"}
+
+# ─── Pantry CRUD ───────────────────────────────────────────────
+@app.get("/api/pantry", response_model=list[PantryItemSchema])
+async def get_pantry(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    result = await db.execute(select(PantryItem).where(PantryItem.user_id == current_user.id).order_by(PantryItem.created_at.desc()))
+    return [
+        PantryItemSchema(id=p.id, name=p.name, created_at=p.created_at.isoformat())
+        for p in result.scalars().all()
+    ]
+
+@app.post("/api/pantry", response_model=PantryItemSchema)
+async def add_pantry_item(
+    request: PantryItemCreateRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    item = PantryItem(user_id=current_user.id, name=request.name)
+    db.add(item)
+    await db.commit()
+    await db.refresh(item)
+    return PantryItemSchema(id=item.id, name=item.name, created_at=item.created_at.isoformat())
+
+@app.delete("/api/pantry/{item_id}")
+async def delete_pantry_item(
+    item_id: str,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    await db.execute(delete(PantryItem).where(PantryItem.id == item_id, PantryItem.user_id == current_user.id))
+    await db.commit()
+    return {"status": "deleted"}

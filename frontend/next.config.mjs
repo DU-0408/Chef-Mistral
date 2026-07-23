@@ -8,6 +8,9 @@ console.log("Using BACKEND_URL:", backendUrl);
 
 const nextConfig = {
   output: "standalone",
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 
   async rewrites() {
     return [

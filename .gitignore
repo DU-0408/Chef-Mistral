@@ -39,3 +39,6 @@ npm-debug.log*
 *.prod.yml
 secret*.yml
 !secret.yml.example
+
+#Extras
+stitch_chef_qwen_minimalist_ui/

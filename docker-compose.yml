@@ -37,7 +37,10 @@ services:
 
   # ─── Next.js Frontend ─────────────────────────────────────────
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      args:
+        BACKEND_URL: http://backend:8000
     container_name: chef-qwen-frontend
     restart: unless-stopped
     ports:

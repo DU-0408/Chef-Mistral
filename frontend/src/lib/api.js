@@ -92,3 +92,113 @@ export async function generateRecipe(token, ingredients) {
 
   return data;
 }
+
+/**
+ * Update the user's profile (dietary restrictions).
+ */
+export async function updateProfile(token, dietary_restrictions) {
+  const res = await fetch(`${API_BASE}/api/auth/me`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ dietary_restrictions }),
+  });
+
+  if (!res.ok) throw new Error("Failed to update profile");
+  return res.json();
+}
+
+/**
+ * Pantry API
+ */
+export async function getPantry(token) {
+  const res = await fetch(`${API_BASE}/api/pantry`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch pantry");
+  return res.json();
+}
+
+export async function addPantryItem(token, name) {
+  const res = await fetch(`${API_BASE}/api/pantry`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error("Failed to add item to pantry");
+  return res.json();
+}
+
+export async function removePantryItem(token, id) {
+  const res = await fetch(`${API_BASE}/api/pantry/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to remove item from pantry");
+  return res.json();
+}
+
+/**
+ * Recipes API
+ */
+export async function getRecipes(token) {
+  const res = await fetch(`${API_BASE}/api/recipes`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch recipes");
+  return res.json();
+}
+
+export async function saveRecipe(token, title, content, image_url = null) {
+  const res = await fetch(`${API_BASE}/api/recipes`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ title, content, image_url }),
+  });
+  if (!res.ok) throw new Error("Failed to save recipe");
+  return res.json();
+}
+
+export async function toggleFavoriteRecipe(token, id, is_favorite) {
+  const res = await fetch(`${API_BASE}/api/recipes/${id}?is_favorite=${is_favorite}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to update favorite status");
+  return res.json();
+}
+
+export async function deleteRecipe(token, id) {
+  const res = await fetch(`${API_BASE}/api/recipes/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to delete recipe");
+  return res.json();
+}
+
+/**
+ * Image Generation API
+ */
+export async function generateRecipeImage(token, prompt) {
+  const res = await fetch(`${API_BASE}/api/recipe/image`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ prompt }),
+  });
+  
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to generate image");
+  return data;
+}
