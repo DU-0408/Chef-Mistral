@@ -47,9 +47,8 @@ async def init_db():
     retries = 5
     for attempt in range(retries):
         try:
-            async with engine.begin() as conn:
-                from models import User  # noqa: F401 — import to register model
-                await conn.run_sync(Base.metadata.create_all)
+            import subprocess
+            subprocess.run(["alembic", "upgrade", "head"], check=True)
             logger.info("Database tables verified/created successfully.")
             break
         except Exception as e:
