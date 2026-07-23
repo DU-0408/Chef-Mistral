@@ -29,7 +29,9 @@ target_metadata = Base.metadata
 
 # Override sqlalchemy.url dynamically
 db_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/chef_qwen")
-config.set_main_option("sqlalchemy.url", db_url)
+# Escape % signs for configparser interpolation
+db_url_escaped = db_url.replace("%", "%%")
+config.set_main_option("sqlalchemy.url", db_url_escaped)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
